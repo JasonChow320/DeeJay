@@ -30,7 +30,7 @@ services:
     depends_on:
       - mongodb
     volumes:
-      - ./server/mongodb-init:/mongodb-init
+      - ./mongodb-init:/mongodb-init
     links:
       - mongodb
     command:
