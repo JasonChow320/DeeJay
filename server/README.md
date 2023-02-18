@@ -4,5 +4,9 @@ This is the infrastructure for DeeJay's backend server. Implemented in Rust, it 
 
 # To install and run
 
-You can use Docker or run it on host without Docker.
+Please use Docker to run this. I suppose you can also install Mongo and Redis on your host system and connect to the servers that way.
+
+```bash
+sudo docker compose up
+```
 
