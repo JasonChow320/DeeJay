@@ -15,6 +15,10 @@ pub enum CustomError {
         message: String,
     },
     #[display(fmt = message)]
+    UsernameTakenError {
+        message: String,
+    },
+    #[display(fmt = message)]
     RedisError {
         message: String,
     },
@@ -39,6 +43,7 @@ impl CustomError {
     fn name(&self) -> String {
         let name = match self {
             Self::MongoDbError { message: _ } => "MongoDB error",
+            Self::UsernameTakenError { message: _ } => "Username taken",
             Self::RedisError { message: _ } => "Redis error",
             Self::NotFound { message: _ } => "Resource not found",
             Self::InternalError => "Internal error",
@@ -57,6 +62,7 @@ impl ResponseError for CustomError {
     fn status_code(&self) -> StatusCode {
         match *self {
             CustomError::MongoDbError { message: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            CustomError::UsernameTakenError { message: _ } => StatusCode::CONFLICT,
             CustomError::RedisError { message: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             CustomError::NotFound { message: _ } => StatusCode::NOT_FOUND,
             CustomError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,

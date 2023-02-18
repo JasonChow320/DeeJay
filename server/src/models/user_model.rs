@@ -5,8 +5,8 @@ use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, Sanitize)]
 pub struct UserLogin {
-//    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-//    pub id: Option<ObjectId>,
+    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
+    pub id: Option<ObjectId>,
     #[sanitize(trim)]
     pub username: String,
     pub password: String

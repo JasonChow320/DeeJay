@@ -42,6 +42,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::index)
             .service(database_routes::login)
             .service(database_routes::make_account)
+            .service(database_routes::delete_account)
             .app_data(database_service.clone());
 
         app

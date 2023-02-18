@@ -23,6 +23,7 @@ pub struct DataBaseService {
 }
 
 impl DataBaseService {
+
     pub fn new(
         mongodb_client: MongoDbClient,
         redis_client: Client,
@@ -39,7 +40,7 @@ impl DataBaseService {
         self.mongodb_client.get_user(username).await
     }
 
-    pub async fn insert_user(&self, username: String, password: String) -> Result<UserLogin, CustomError> {
+    pub async fn insert_user(&self, username: &String, password: &String) -> Result<UserLogin, CustomError> {
         self.mongodb_client.insert_user(username, password).await
         /*
         self.redis_connection_manager
@@ -53,108 +54,27 @@ impl DataBaseService {
     }
 
     /*
-    pub async fn get_planet(&self, planet_id: &str) -> Result<Planet, CustomError> {
-        let cache_key = self.get_planet_cache_key(planet_id);
-        let mut con = self.redis_client.get_async_connection().await?;
+    pub async fn update_user(&self, planet_id: &str, planet: Planet) -> Result<UserLogin, CustomError> {
 
-        let cached_planet = con.get(&cache_key).await?;
-        match cached_planet {
-            Value::Nil => {
-                debug!("Use database to retrieve a planet by id: {}", &planet_id);
-                let result: Planet = self
-                    .mongodb_client
-                    .get_planet(ObjectId::from_str(planet_id)?)
-                    .await?;
-
-                let _: () = redis::pipe()
-                    .atomic()
-                    .set(&cache_key, &result)
-                    .expire(&cache_key, 60)
-                    .query_async(&mut con)
-                    .await?;
-
-                Ok(result)
-            }
-            Value::Data(val) => {
-                debug!("Use cache to retrieve a planet by id: {}", planet_id);
-                Ok(serde_json::from_slice(&val)?)
-            }
-            _ => Err(RedisError {
-                message: "Unexpected response from Redis".to_string(),
-            }),
-        }
-    }
-
-    pub async fn update_planet(
-        &self,
-        planet_id: &str,
-        planet: Planet,
-    ) -> Result<Planet, CustomError> {
         let updated_planet = self
             .mongodb_client
             .update_planet(ObjectId::from_str(planet_id)?, planet)
             .await?;
 
-        let cache_key = self.get_planet_cache_key(planet_id);
-        self.redis_connection_manager.clone().del(cache_key).await?;
-
         Ok(updated_planet)
     }
+    */
 
-    pub async fn delete_planet(&self, planet_id: &str) -> Result<(), CustomError> {
+    pub async fn delete_user(&self, id: &String) -> Result<(), CustomError> {
+
         self.mongodb_client
-            .delete_planet(ObjectId::from_str(planet_id)?)
+            .delete_user(ObjectId::from_str(id)?)
             .await?;
 
-        let cache_key = self.get_planet_cache_key(planet_id);
-        self.redis_connection_manager.clone().del(cache_key).await?;
+        //self.redis_connection_manager.clone().del(cache_key).await?;
 
         Ok(())
     }
-
-    pub async fn get_image_of_planet(&self, planet_id: &str) -> Result<Vec<u8>, CustomError> {
-        let cache_key = self.get_image_cache_key(planet_id);
-        let mut redis_connection_manager = self.redis_connection_manager.clone();
-
-        let cached_image = redis_connection_manager.get(&cache_key).await?;
-        match cached_image {
-            Value::Nil => {
-                debug!(
-                    "Use database to retrieve an image of a planet by id: {}",
-                    &planet_id
-                );
-                let planet = self
-                    .mongodb_client
-                    .get_planet(ObjectId::from_str(planet_id)?)
-                    .await?;
-                let result = crate::db::get_image_of_planet(&planet.name).await;
-
-                let _: () = redis::pipe()
-                    .atomic()
-                    .set(&cache_key, result.clone())
-                    .expire(&cache_key, 60)
-                    .query_async(&mut redis_connection_manager)
-                    .await?;
-
-                Ok(result)
-            }
-            Value::Data(val) => {
-                debug!(
-                    "Use cache to retrieve an image of a planet by id: {}",
-                    &planet_id
-                );
-                Ok(val)
-            }
-            _ => Err(RedisError {
-                message: "Unexpected response from Redis".to_string(),
-            }),
-        }
-    }
-
-    fn get_planet_cache_key(&self, planet_id: &str) -> String {
-        format!("{}:{}", USERNAME_PREFIX, planet_id)
-    }
-    */
 }
 
 /*
