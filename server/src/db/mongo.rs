@@ -4,7 +4,7 @@ use crate::errors::CustomError::NotFound;
 use mongodb::bson::{doc, oid::ObjectId, Document};
 use mongodb::{Client, Collection};
 
-use crate::model::UserLogin;
+use crate::models::user_model::UserLogin;
 
 const DB_NAME: &str = "deejay";
 const COLLECTION_NAME: &str = "user_login";
@@ -15,6 +15,7 @@ pub struct MongoDbClient {
 }
 
 impl MongoDbClient {
+    //TODO: change error messages
 
     pub async fn new(mongodb_uri: String) -> Self {
         let mongodb_client = Client::with_uri_str(mongodb_uri)
@@ -26,7 +27,7 @@ impl MongoDbClient {
         }
     }
 
-    // TODO: see if sanitization is needed
+    // TODO: see if sanitization is needed, change error msg when mongo fully integrated
     pub async fn get_user(&self, username: &String) -> Result<UserLogin, CustomError> {
         let collection = self.get_user_collection();
 

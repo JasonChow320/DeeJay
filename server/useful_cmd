@@ -1,0 +1,8 @@
+# Mongo
+docker exec -it mongodb mongo --username deejay --password th3r00t
+use deejay
+show collections
+db.user_login.find()
+
+# redis
+docker exec -it redis redis-cli

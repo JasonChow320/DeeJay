@@ -4,6 +4,7 @@ use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, HttpResponseBuilder};
 use derive_more::{Display, Error};
 use log::error;
+use redis::RedisError;
 use serde::Serialize;
 
 #[derive(Debug, Display, Error)]
@@ -122,7 +123,7 @@ impl From<mongodb::bson::oid::Error> for CustomError {
     }
 }
 
-/*
+
 impl From<RedisError> for CustomError {
     fn from(source: RedisError) -> Self {
         Self::RedisError {
@@ -136,4 +137,4 @@ impl From<serde_json::Error> for CustomError {
         Self::InternalError
     }
 }
-*/
+

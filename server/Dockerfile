@@ -2,9 +2,11 @@
 
 FROM rust:1.67
 
-WORKDIR /deejay/server/src
+WORKDIR /deejay/server
 COPY . .
 
 RUN cargo install --path .
 
 CMD ["cargo", "run"]
+
+EXPOSE 1337

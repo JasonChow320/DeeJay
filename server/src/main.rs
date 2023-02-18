@@ -1,16 +1,16 @@
 use actix_web::{App, HttpServer};
 use actix_web::web::Data;
 
-use crate::db::MongoDbClient;
-use crate::services::DeeJayService;
+use crate::db::{mongo, redis};
+use crate::services::database_services::DataBaseService;
+use crate::routes::database_routes;
 
 use std::env;
 
 mod db;
 mod errors;
-mod handlers;
-mod model;
-mod redis;
+mod routes;
+mod models;
 mod services;
 
 #[actix_web::main]
@@ -20,7 +20,7 @@ async fn main() -> std::io::Result<()> {
 
     let mongodb_uri =
       env::var("MONGODB_URI").expect("You must set the MONGODB_URI environment var!");
-    let mongodb_client = MongoDbClient::new(mongodb_uri).await;
+    let mongodb_client = mongo::MongoDbClient::new(mongodb_uri).await;
     
     let redis_uri = env::var("REDIS_URI").expect("REDIS_URI env var should be specified");
     let redis_client = redis::create_client(redis_uri)
@@ -31,7 +31,7 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Can't create Redis connection manager");
 
-    let deejay_service = Data::new(DeeJayService::new(
+    let database_service = Data::new(DataBaseService::new(
         mongodb_client,
         redis_client,
         redis_connection_manager.clone(),
@@ -39,10 +39,10 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let mut app = App::new()
-            .service(handlers::index)
-            .service(handlers::login)
-            .service(handlers::make_account)
-            .app_data(deejay_service.clone());
+            .service(routes::index)
+            .service(database_routes::login)
+            .service(database_routes::make_account)
+            .app_data(database_service.clone());
 
         app
     })

@@ -6,29 +6,29 @@ use mongodb::bson::oid::ObjectId;
 use redis::aio::ConnectionManager;
 use redis::{AsyncCommands, Client, Value};
 
-use crate::db::MongoDbClient;
+use crate::db::mongo::MongoDbClient;
 use crate::errors::CustomError;
 use crate::errors::CustomError::{RedisError, TooManyRequests};
-use crate::model::{UserLogin};
+use crate::models::user_model::UserLogin;
 
 const USERNAME_PREFIX: &str = "username";
 const RATE_LIMIT_KEY_PREFIX: &str = "rate_limit";
 const MAX_REQUESTS_PER_MINUTE: u64 = 1;
 
 #[derive(Clone)]
-pub struct DeeJayService {
+pub struct DataBaseService {
     mongodb_client: MongoDbClient,
     redis_client: Client,
     redis_connection_manager: ConnectionManager,
 }
 
-impl DeeJayService {
+impl DataBaseService {
     pub fn new(
         mongodb_client: MongoDbClient,
         redis_client: Client,
         redis_connection_manager: ConnectionManager,
     ) -> Self {
-        DeeJayService {
+        DataBaseService {
             mongodb_client,
             redis_client,
             redis_connection_manager,
@@ -40,7 +40,7 @@ impl DeeJayService {
     }
 
     pub async fn insert_user(&self, username: String, password: String) -> Result<UserLogin, CustomError> {
-        let user = self.mongodb_client.insert_user(username, password).await?;
+        self.mongodb_client.insert_user(username, password).await
         /*
         self.redis_connection_manager
             .clone()
@@ -50,7 +50,6 @@ impl DeeJayService {
             )
             .await?;
         */
-        Ok(user)
     }
 
     /*

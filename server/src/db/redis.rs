@@ -3,7 +3,7 @@ use redis::{Client, FromRedisValue, RedisError};
 use redis::{RedisWrite, ToRedisArgs};
 
 use crate::errors::CustomError;
-use crate::model::UserLogin;
+use crate::models::user_model::UserLogin;
 use std::sync::Mutex;
 
 pub async fn create_client(redis_uri: String) -> Result<Client, RedisError> {
