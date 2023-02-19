@@ -7,7 +7,7 @@ use crate::errors::CustomError;
 use crate::services::database_services::DataBaseService;
 
 #[derive(Deserialize, Sanitize)]
-struct Login {
+struct LoginRequest {
     #[sanitize(trim)]
     username: String,
     #[sanitize(trim)]
@@ -22,48 +22,40 @@ struct DataBaseRequest {
 
 #[derive(Serialize)]
 struct LoginResponse {
-    id: Option<ObjectId>,
-    session_token: &'static str,
+    session_token: String,
 }
 
 #[get("/login")]
-async fn login(login: web::Form<Login>, database_services: web::Data<DataBaseService>)
+async fn login(login: web::Form<LoginRequest>, database_services: web::Data<DataBaseService>)
     -> Result<HttpResponse, CustomError> {
 
-    let user = database_services.get_user(&login.username).await?;
+    let session_token = database_services.get_user(&login.username).await?;
 
     // TODO: generate TTL and session token
     let res = LoginResponse {
-        id: user.id,
-        session_token: "sess_toke_lit"
+        session_token: session_token,
     };
     Ok(HttpResponse::Ok().json(res))
 }
 
 #[post("/make_acc")]
-async fn make_account(acc_info: web::Form<Login>, database_services: web::Data<DataBaseService>) -> Result<HttpResponse, CustomError> {
+async fn make_account(acc_info: web::Form<LoginRequest>, database_services: web::Data<DataBaseService>) -> Result<HttpResponse, CustomError> {
 
-    let user = database_services.insert_user(&acc_info.username, &acc_info.password).await?;
+    let session_token = database_services.insert_user(&acc_info.username, &acc_info.password).await?;
 
     // TODO: generate TTL and session token
     let res = LoginResponse {
-        id: user.id,
-        session_token: "sess_toke_lit"
+        session_token: session_token,
     };
     Ok(HttpResponse::Ok().json(res))
 }
 
-// TODO: implement session token 
+// TODO: remove session token?
 #[post("/delete_acc")]
 async fn delete_account(client_info: web::Form<DataBaseRequest>, database_services: web::Data<DataBaseService>) -> Result<HttpResponse, CustomError> {
 
     database_services.delete_user(&client_info.id).await?;
 
-    // TODO: generate TTL and session token
-    let res = LoginResponse {
-        id: None,
-        session_token: "sess_toke_lit"
-    };
-    Ok(HttpResponse::Ok().json(res))
+    Ok(HttpResponse::Ok().finish())
 } 
 

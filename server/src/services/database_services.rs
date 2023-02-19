@@ -10,10 +10,12 @@ use crate::db::mongo::MongoDbClient;
 use crate::errors::CustomError;
 use crate::errors::CustomError::{RedisError, TooManyRequests};
 use crate::models::user_model::UserLogin;
+use crate::services::random;
 
 const USERNAME_PREFIX: &str = "username";
 const RATE_LIMIT_KEY_PREFIX: &str = "rate_limit";
 const MAX_REQUESTS_PER_MINUTE: u64 = 1;
+const SESSION_TIMEOUT: usize = 60;
 
 #[derive(Clone)]
 pub struct DataBaseService {
@@ -24,6 +26,11 @@ pub struct DataBaseService {
 
 impl DataBaseService {
 
+    /*
+     * Constructor
+     *
+     * Initialize clients for MongoDb, Redis, and Redis Connection
+     */
     pub fn new(
         mongodb_client: MongoDbClient,
         redis_client: Client,
@@ -36,12 +43,66 @@ impl DataBaseService {
         }
     }
 
-    pub async fn get_user(&self, username: &String) -> Result<UserLogin, CustomError> {
-        self.mongodb_client.get_user(username).await
+    /* 
+     * fn get_user
+     *
+     * @brief    find user with <username>, return a unique session token if found, the token will be saved for one day
+     * 
+     * @param username   The username to search for
+     *
+     * @return   A Token if found, otherwise some CustomError
+     */
+    pub async fn get_user(&self, username: &String) -> Result<String, CustomError> {
+
+        let user = self.mongodb_client.get_user(username).await?;
+
+        println!("Hello world");
+        let randomString = random::generate_random_string();
+        let user_session_cache_key = format!("{}:{}", USERNAME_PREFIX, randomString);
+
+        let mut con = self.redis_client.get_async_connection().await?;
+
+        let _: () = redis::pipe()
+            .atomic()
+            .set(&user_session_cache_key, ObjectId::to_hex(user.id.unwrap()))
+            .expire(&user_session_cache_key, SESSION_TIMEOUT)
+            .query_async(&mut con)
+            .await?;
+
+        println!("Bye world");
+        Ok(randomString)
     }
 
-    pub async fn insert_user(&self, username: &String, password: &String) -> Result<UserLogin, CustomError> {
-        self.mongodb_client.insert_user(username, password).await
+    /* 
+     * fn insert_user
+     *
+     * @brief    insert user with <username> and <password>, return a unique session token if successful, the token will be saved for one day
+     * 
+     * @param username   The username to create an account for
+     * @param password   The password to create an account with
+     *
+     * @return   A Token if found, otherwise some CustomError
+     */
+    pub async fn insert_user(&self, username: &String, password: &String) -> Result<String, CustomError> {
+
+        self.mongodb_client.insert_user(username, password).await?;
+
+        let user = self.mongodb_client.get_user(username).await?;
+
+        let randomString = random::generate_random_string();
+        let user_session_cache_key = format!("{}:{}", USERNAME_PREFIX, randomString);
+
+        let mut con = self.redis_client.get_async_connection().await?;
+
+        let _: () = redis::pipe()
+            .atomic()
+            .set(&user_session_cache_key, ObjectId::to_hex(user.id.unwrap()))
+            .expire(&user_session_cache_key, SESSION_TIMEOUT)
+            .query_async(&mut con)
+            .await?;
+
+        Ok(randomString)
+
         /*
         self.redis_connection_manager
             .clone()
@@ -65,6 +126,15 @@ impl DataBaseService {
     }
     */
 
+    /* 
+     * fn delete_user
+     *
+     * @brief   delete an user with the ObjectId given 
+     * 
+     * @param id   The ObjectId for the Document to delete
+     *
+     * @return   A regular Ok if found and deleted, otherwise some CustomError
+     */
     pub async fn delete_user(&self, id: &String) -> Result<(), CustomError> {
 
         self.mongodb_client
@@ -74,6 +144,46 @@ impl DataBaseService {
         //self.redis_connection_manager.clone().del(cache_key).await?;
 
         Ok(())
+    }
+
+    /* 
+     * fn get_user_session_cache_key
+     *
+     * @brief   map username:session_token to the user's ObjectId 
+     * 
+     * @param session   The session token that is mapped to the logged in user's ObjectId
+     *
+     * @return   ObjectId if found, otherwise some CustomError
+     */
+    async fn get_user_session_cache_key(&self, session: String) -> String {
+
+        format!("{}:{}", USERNAME_PREFIX, session)
+    }
+
+    /* 
+     * fn set_user_session_cache_key
+     *
+     * @brief   map username:session_token to the user's ObjectId 
+     * 
+     * @param session   The session token that is mapped to the logged in user's ObjectId
+     *
+     * @return the session token 
+     */
+    async fn set_user_session_cache_key(&self, object_id: String) -> Result<String, CustomError> {
+
+        let randomString = random::generate_random_string();
+        let user_session_cache_key = format!("{}:{}", USERNAME_PREFIX, randomString);
+
+        let mut con = self.redis_client.get_async_connection().await?;
+
+        let _: () = redis::pipe()
+            .atomic()
+            .set(&user_session_cache_key, &object_id)
+            .expire(&user_session_cache_key, 60)
+            .query_async(&mut con)
+            .await?;
+
+        Ok(randomString)
     }
 }
 

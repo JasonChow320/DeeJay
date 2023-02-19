@@ -6,3 +6,5 @@ db.user_login.find()
 
 # redis
 docker exec -it redis redis-cli
+
+get mykey
