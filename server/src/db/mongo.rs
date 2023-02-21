@@ -18,7 +18,7 @@ impl MongoDbClient {
     /* 
      * Constructor: creates an instance of MongoDbClient.
      * 
-     * @param mongodb_uri   the path to initialize the Mongo Client instance
+     * @param mongodb_uri   the path to connect to the Mongo Client instance
      */ 
     pub async fn new(mongodb_uri: String) -> Self {
 

@@ -3,7 +3,7 @@ use actix_web::web::Data;
 
 use crate::db::{mongo, redis};
 use crate::services::database_services::DataBaseService;
-use crate::routes::database_routes;
+use crate::routes::user_login_routes;
 
 use std::env;
 
@@ -41,9 +41,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         let mut app = App::new()
             .service(routes::index)
-            .service(database_routes::login)
-            .service(database_routes::make_account)
-            .service(database_routes::delete_account)
+            .service(user_login_routes::login)
+            .service(user_login_routes::make_account)
+            .service(user_login_routes::delete_account)
             .app_data(database_service.clone());
 
         app

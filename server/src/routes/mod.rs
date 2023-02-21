@@ -1,6 +1,8 @@
 use actix_web::{get, HttpResponse, Responder};
 
-pub mod database_routes;
+pub mod user_login_routes;
+pub mod deejay_routes;
+pub mod packet_struct;
 
 #[get("/")]
 async fn index() -> impl Responder {

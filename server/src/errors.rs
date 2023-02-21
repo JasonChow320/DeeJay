@@ -19,6 +19,10 @@ pub enum CustomError {
         message: String,
     },
     #[display(fmt = message)]
+    InvalidSessionToken {
+        message: String,
+    },
+    #[display(fmt = message)]
     RedisError {
         message: String,
     },
@@ -44,6 +48,7 @@ impl CustomError {
         let name = match self {
             Self::MongoDbError { message: _ } => "MongoDB error",
             Self::UsernameTakenError { message: _ } => "Username taken",
+            Self::InvalidSessionToken { message: _ } => "Invalid session token",
             Self::RedisError { message: _ } => "Redis error",
             Self::NotFound { message: _ } => "Resource not found",
             Self::InternalError => "Internal error",
@@ -63,6 +68,7 @@ impl ResponseError for CustomError {
         match *self {
             CustomError::MongoDbError { message: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             CustomError::UsernameTakenError { message: _ } => StatusCode::CONFLICT,
+            CustomError::InvalidSessionToken { message: _ } => StatusCode::IM_A_TEAPOT,
             CustomError::RedisError { message: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             CustomError::NotFound { message: _ } => StatusCode::NOT_FOUND,
             CustomError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
@@ -131,6 +137,7 @@ impl From<mongodb::bson::oid::Error> for CustomError {
 
 
 impl From<RedisError> for CustomError {
+
     fn from(source: RedisError) -> Self {
         Self::RedisError {
             message: source.to_string(),
@@ -139,6 +146,7 @@ impl From<RedisError> for CustomError {
 }
 
 impl From<serde_json::Error> for CustomError {
+
     fn from(_source: serde_json::Error) -> Self {
         Self::InternalError
     }
