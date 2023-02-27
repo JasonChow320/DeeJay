@@ -20,3 +20,9 @@ pub struct LoginResponse {
     pub session_token: String,
     pub time_to_live_sec: usize,
 }
+
+#[derive(Serialize)]
+pub struct SpotifyLoginResponse {
+    pub auth_code: String,
+    pub time_to_live_sec: usize,
+}

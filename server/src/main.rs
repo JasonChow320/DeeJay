@@ -1,9 +1,13 @@
 use actix_web::{App, HttpServer};
 use actix_web::web::Data;
+use reqwest;
 
 use crate::db::{mongo, redis};
 use crate::services::database_services::DataBaseService;
+use crate::services::deejay_services::DeeJayService;
 use crate::routes::user_login_routes;
+use crate::routes::deejay_routes;
+use crate::spotify::spotify;
 
 use std::env;
 
@@ -38,13 +42,21 @@ async fn main() -> std::io::Result<()> {
         redis_connection_manager.clone(),
     ));
 
+    let spotify_client = spotify::SpotifyClient::new();
+
+    let deejay_service = Data::new(DeeJayService::new(
+        spotify_client
+    ));
+
     HttpServer::new(move || {
         let mut app = App::new()
             .service(routes::index)
             .service(user_login_routes::login)
             .service(user_login_routes::make_account)
             .service(user_login_routes::delete_account)
-            .app_data(database_service.clone());
+            .service(deejay_routes::login)
+            .app_data(database_service.clone())
+            .app_data(deejay_service.clone());
 
         app
     })

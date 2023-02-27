@@ -10,7 +10,8 @@ actix-web = "4"
 mongodb = "2.1"
 redis = { version = "0.21.4", features = ["tokio-comp", "connection-manager"] }
 bson = { version = "2", features = ["chrono-0_4"] } # Needed for using chrono datetime in doc
-tokio = "1"
+tokio = { version = "1", features = ["full"] } 
+reqwest = { version = "0.11", features = ["json"] }
 chrono = "0.4" # Used for setting DateTimes
 serde = "1" # Used in the Map Data into Structs section
 dotenv = "0.15.0"
