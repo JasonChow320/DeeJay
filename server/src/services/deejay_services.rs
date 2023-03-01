@@ -7,7 +7,7 @@ use redis::aio::ConnectionManager;
 
 use crate::errors::CustomError;
 use crate::models::user_model::UserLogin;
-use crate::spotify::spotify::SpotifyClient;
+use crate::api::spotify::SpotifyClient;
 
 use crate::routes::packet_struct::LoginResponse;
 
@@ -35,9 +35,8 @@ impl DeeJayService {
         }
     }
 
-    pub async fn test_reqwest(self) -> Result<(), CustomError> {
-        self.reqwest_client.test();
-        Ok(())
+    pub async fn test_reqwest(&self) -> Result<String, CustomError> {
+        self.reqwest_client.test().await
     }
 }    
 

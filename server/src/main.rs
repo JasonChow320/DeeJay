@@ -1,13 +1,12 @@
 use actix_web::{App, HttpServer};
 use actix_web::web::Data;
-use reqwest;
 
 use crate::db::{mongo, redis};
 use crate::services::database_services::DataBaseService;
 use crate::services::deejay_services::DeeJayService;
 use crate::routes::user_login_routes;
 use crate::routes::deejay_routes;
-use crate::spotify::spotify;
+use crate::api::spotify;
 
 use std::env;
 
@@ -16,6 +15,7 @@ mod errors;
 mod routes;
 mod models;
 mod services;
+mod api;
 mod Logger;
 
 #[actix_web::main]
