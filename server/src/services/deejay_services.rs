@@ -36,7 +36,7 @@ impl DeeJayService {
     }
 
     pub async fn test_reqwest(&self) -> Result<String, CustomError> {
-        self.reqwest_client.test().await
+        self.reqwest_client.callback().await
     }
 }    
 

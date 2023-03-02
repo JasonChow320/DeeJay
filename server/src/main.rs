@@ -55,6 +55,7 @@ async fn main() -> std::io::Result<()> {
             .service(user_login_routes::make_account)
             .service(user_login_routes::delete_account)
             .service(deejay_routes::login)
+            .service(deejay_routes::callback)
             .app_data(database_service.clone())
             .app_data(deejay_service.clone());
 

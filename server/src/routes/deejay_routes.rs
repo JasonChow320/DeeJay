@@ -12,11 +12,25 @@ use crate::services::deejay_services::DeeJayService;
 async fn login(database_services: web::Data<DataBaseService>, deejay_services: web::Data<DeeJayService>)
     -> Result<HttpResponse, CustomError> {
 
-    let string = deejay_services.test_reqwest().await?;
+    let string = deejay_services.test_callback().await?;
 
     let res = SpotifyLoginResponse{
         auth_code: "hi".to_string(),
         time_to_live_sec: 2,
     };
+    Ok(HttpResponse::Ok().json(res))
+}
+
+#[get("/callback")]
+async fn callback(database_services: web::Data<DataBaseService>, deejay_services: web::Data<DeeJayService>)
+    -> Result<HttpResponse, CustomError> {
+
+    println!("redirected here");
+
+    let res = SpotifyLoginResponse{
+        auth_code: "redirect".to_string(),
+        time_to_live_sec: 2,
+    };
+
     Ok(HttpResponse::Ok().json(res))
 }
