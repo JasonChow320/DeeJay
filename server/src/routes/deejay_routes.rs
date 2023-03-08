@@ -1,3 +1,4 @@
+use actix_web::cookie::CookieJar;
 use actix_web::{get, post, web, HttpResponse};
 use mongodb::bson::{oid::ObjectId};
 use serde::{Serialize, Deserialize};
@@ -12,7 +13,7 @@ use crate::services::deejay_services::DeeJayService;
 async fn login(database_services: web::Data<DataBaseService>, deejay_services: web::Data<DeeJayService>)
     -> Result<HttpResponse, CustomError> {
 
-    let string = deejay_services.test_callback().await?;
+    let string = deejay_services.test_reqwest().await?;
 
     let res = SpotifyLoginResponse{
         auth_code: "hi".to_string(),
@@ -21,8 +22,13 @@ async fn login(database_services: web::Data<DataBaseService>, deejay_services: w
     Ok(HttpResponse::Ok().json(res))
 }
 
+#[derive(Deserialize)]
+struct Code {
+    code: String,
+}
+
 #[get("/callback")]
-async fn callback(database_services: web::Data<DataBaseService>, deejay_services: web::Data<DeeJayService>)
+async fn callback(database_services: web::Data<DataBaseService>, deejay_services: web::Data<DeeJayService>, code: web::Query<Code>)
     -> Result<HttpResponse, CustomError> {
 
     println!("redirected here");
