@@ -1,0 +1,11 @@
+html
+  head
+    title="user_page"
+  body
+    h1=titleheader
+    p="access token: " + access_token
+    p="refresh token: " + refresh_token
+    p="state/cookie: " +state
+    a(href='/') Home
+    p="Copy and Paste the following URL to get the new-releases of spotify: http://localhost:3000/spotifyapi/nr/" + access_token
+
