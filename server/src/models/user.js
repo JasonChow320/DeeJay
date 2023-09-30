@@ -14,6 +14,10 @@ const UserSchema = mongoose.Schema({
     session :{
         type : String,
         required: true
+    },
+    sessionId :{
+        type: String,
+        required: true
     }
 });
 
@@ -44,6 +48,11 @@ UserSchema.virtual('refreshtoken')
 UserSchema.virtual('updateSession')
 .set(function(sess){
     this.session = sess;
+});
+
+UserSchema.virtual('updateSessionId')
+.set(function(sessionId){
+    this.sessionId = sessionId;
 });
 
 module.exports = mongoose.model('User', UserSchema);

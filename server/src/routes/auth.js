@@ -78,6 +78,7 @@ router.post('/userlogin', (req, res, next)=>{
             return;
         } 
 
+        // correct login, find user data
         const saltedHash = saltPassword(userLogin.rsalt, password)
         if(saltedHash == userLogin.getpassword) {
             User.findOne({_id : userLogin.getkey}, function(error, user) {
@@ -88,18 +89,34 @@ router.post('/userlogin', (req, res, next)=>{
                     return;
                 }
 
-                let sessionId = generateRandomString(16);
-                let sess = generateRandomString(8);
-                user.updateSession = sess;
-                /* saves session for a day */
-                redis.setex('UserSession:'+sessionId, 43200, sess);
-                user.save();
-                const response = {
-                    sessionId : sessionId,
-                    havespotify : user.havespotify,
-                    error : null
-                };
-                res.json(response);
+                // check if User already have valid sessionId saved
+                redis.get('UserSession:' + user.sessionId, (err, data)=> {
+                    if (data != null) {
+                        console.log("user [" + myusername + "] still have valid session key");
+                        redis.setex('UserSession:'+user.sessionId, 43200, user.session);
+                        const response = {
+                            sessionId : user.sessionId,
+                            havespotify : user.havespotify,
+                            error : null
+                        };
+                        res.json(response);
+                    } else {
+                        let sessionId = generateRandomString(16);
+                        let sess = generateRandomString(8);
+                        user.updateSession = sess;
+                        user.sessionId = sessionId;
+                        /* saves session for a day */
+                        redis.setex('UserSession:'+sessionId, 43200, sess);
+                        user.save();
+                        const response = {
+                            sessionId : sessionId,
+                            havespotify : user.havespotify,
+                            error : null
+                        };
+                        res.json(response);
+                    }
+                });
+
             });
         } else {
             console.log('Error! username [' + myusername + '] tried to login using password [' + password + ']');
@@ -138,13 +155,13 @@ router.post('/user', (req, res, next) => {
     var email = req.body.email|| null;
 
     if(myusername == null || password == null || email == null){
-        res.status(400).json({message : 'Failed to add user'});
+        res.status(400).json({error : 'Failed to add user'});
         return;
     }
 
     //check if the username is valid
     if(stringContainsSpecialCharacters(myusername)){
-        res.status(400).json({error : 'Invalid username! Don\'t use space or special characters!'});
+        res.status(400).json({message : 'Invalid username! Don\'t use space or special characters!'});
         return;
     }
 
@@ -165,7 +182,8 @@ router.post('/user', (req, res, next) => {
             spotify:{
                 havespotify: false,
             },
-            session : session
+            session : session,
+            sessionId : sessionId
         });
 
         newUser.save((err, user)=>{

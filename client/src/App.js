@@ -6,12 +6,31 @@ import Cookies from 'universal-cookie';
 class App extends Component {
     constructor(props) {
         super(props);
+        /**
+          * @brief This is a dynamic state that controlls what to display and 
+          *        provides the user a way to interact with the application.
+          *         
+          * For main application
+          * @state displayArray    displays the songs for user to queue
+          * @state artists         displays the artist for the song
+          * @state deejay_code     forum for user to join a deejay session
+          *
+          * For login
+          * @state makeAcc         boolean to see if user is trying to make account
+          * @state username        text field for username
+          * @state password        text field for password
+          * @state email           text field for email
+          * @state link            api to backend to login to spotify
+          * @state loginSpotify    boolean if user is signed in to spotify
+          * @state confirmDeleteAcc     boolean to confirm if user wants to delete account
+          */
         this.state = {
             displayArray : [],
             artists: [], 
             genre: "", 
             track: "", 
             deejay_code : "",
+            join_deejay : "",
             session : 'none',
             username : '',
             password : '',
@@ -20,11 +39,11 @@ class App extends Component {
             makeAcc : false,
             loggedIn : false,
             loginSpotify : false,
-            deleteAcc : false
+            confirmDeleteAcc : false
         };   
         this.handleChange = this.handleChange.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
         this.search = this.search.bind(this);
+        this.start_deejay_session = this.start_deejay_session.bind(this);
         this.join_deejay_session = this.join_deejay_session.bind(this);
         this.addItems = this.addItems.bind(this);
         this.getSpotifyNewReleases = this.getSpotifyNewReleases.bind(this);
@@ -46,21 +65,35 @@ class App extends Component {
         });
     }
 
-    handleSubmit(event) {
-        event.preventDefault();
-        this.join_deejay_session();
+    start_deejay_session() {
+        fetch('http://localhost:3001/spotifyapi/start_deejay/'+this.state.session, {
+            method: 'GET',
+        })
+        .then(res => res.json())
+        .then(result => {
+            alert("Successfully started!");
+            alert(result.code);
+            this.setState({deejay_code: result.code});
+            }
+        );
     }
 
     join_deejay_session() {
-        let data = {deejay_code: this.state.deejay_code}
-        fetch('http://localhost:3001/deejay/join_session', {
+        let data = {sessionId : this.state.session, deejay_code: this.state.join_deejay}
+        alert(this.state.join_deejay);
+        fetch('/spotifyapi/join_deejay', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(data)
-            })
-            .then(res => alert(res.text()))
+        })
+        .then(res => res.json())
+        .then(result => {
+            alert("Successfully joined deejay session");
+            this.setState({deejay_code: result.code});
+            }
+        );
     }
 
     search() {
@@ -278,9 +311,7 @@ class App extends Component {
                 });
             }
             if(result.error!=null){
-                this.setState({
-                    message : result.error
-                });
+                alert(result.error);
             }
         });
     }
@@ -293,9 +324,9 @@ class App extends Component {
     }
 
     toggleDelete(){
-        const {deleteAcc} = this.state;
+        const {confirmDeleteAcc} = this.state;
         this.setState({
-            deleteAcc : !deleteAcc
+            confirmDeleteAcc : !confirmDeleteAcc
         })
     }
 
@@ -311,15 +342,16 @@ class App extends Component {
             .then(response => response.json())
             .then(result =>{
                 if(result.error!=null){
-                    alert("hi");
                     alert(result.error);
                 }else{
                     alert(result.message);
                     this.setState({
+                        loggedIn : false,
+                        loginSpotify : false,
+                        session : 'none',
                         username : '',
                         password : '',
-                        session : 'none',
-                        deleteAcc : false,
+                        confirmDeleteAcc : false,
                         makeAcc : false
                     });
                 }
@@ -335,6 +367,7 @@ class App extends Component {
             username : '',
             password : '',
             email : '',
+            confirmDeleteAcc : false,
             makeAcc : false
         });
     }
@@ -352,11 +385,14 @@ class App extends Component {
     }
 
 
-    /*loggedIn - boolean if the user has logged in using our software account
-    makeAcc - boolean if the user is in the process of making an account for our software
-    loginSpotify - boolean if the user has logged into Spotify
-    link - a string containing the link to login to Spotify  */
-    loginPanel(loggedIn, makeAcc, loginSpotify, link, message, deleteAcc, username){
+    /**
+      * @brief Nav bar for the application
+      * loggedIn - boolean if the user has logged in using our software account
+      * makeAcc - boolean if the user is in the process of making an account for our software
+      * loginSpotify - boolean if the user has logged into Spotify
+      *link - a string containing the link to login to Spotify  
+      */
+    loginPanel(loggedIn, makeAcc, loginSpotify, link, confirmDeleteAcc, username){
         if(!loggedIn) {
             if(makeAcc) {
                 return (
@@ -377,7 +413,6 @@ class App extends Component {
                         <input type="submit" value="Create" />
                     </form>
                     <button onClick={this.toggleAccount}>Return to Login</button>
-                    {message || 'none'}
                     </div>
                 );
             } else {
@@ -402,7 +437,7 @@ class App extends Component {
             }
         } else {
             if(loginSpotify) {
-                if(deleteAcc) {
+                if(confirmDeleteAcc) {
                     return (
                         <div>
                             <button onClick={this.signout}>Sign Out</button>
@@ -421,7 +456,7 @@ class App extends Component {
                 );
             }
         } else {
-            if(deleteAcc){
+            if(confirmDeleteAcc){
                 return (
                     <div>
                         <button onClick={this.signout}>Sign Out</button>
@@ -443,8 +478,8 @@ class App extends Component {
 }
 
 render() {
-    const {displayArray, session, makeAcc, link, loggedIn, loginSpotify, message, deleteAcc, username} = this.state;
-    const login = this.loginPanel(loggedIn, makeAcc, loginSpotify, link, message, deleteAcc, username);
+    const {displayArray, session, makeAcc, link, loggedIn, loginSpotify, confirmDeleteAcc, username} = this.state;
+    const login = this.loginPanel(loggedIn, makeAcc, loginSpotify, link, confirmDeleteAcc, username);
 
     // if no session id, then display login screen
     if (session === "none") {
@@ -461,18 +496,17 @@ render() {
             <div className="nav">
                 <div id="navLeft">
 
-                <p>{session || 'none'}</p>
-                <form onSubmit={this.handleSubmit}>
+                <p>DeeJay Session: {this.state.deejay_code || 'none'}</p>
+                <form onSubmit={this.join_deejay_session}>
                 <label>
                     DeeJay Session Code
-                    <input type="text" name="deejay_code" value={this.state.deejay_code} onChange={this.handleChange} />
+                    <input type="text" name="join_deejay" value={this.state.join_deejay} onChange={this.handleChange} />
                 </label>
                 <input type="submit" value="Submit" />
                 </form>
 
-                <button onClick={this.join_deejay_session}>Join Session</button>
                 <div id="spotifyBrowse">
-                    <button onClick={this.getSpotifyCategories}>Categories</button>
+                    <button onClick={this.start_deejay_session}>Start DeeJay session</button>
                     <button onClick={this.getSpotifyGenre}>Genres</button>
                     <button onClick={this.getSpotifyNewReleases}>NewReleases</button>  
                     <button onClick={this.getSpotifyFeaturedPlaylist}>FeaturedPlaylist</button>  
