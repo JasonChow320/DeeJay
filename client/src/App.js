@@ -26,11 +26,10 @@ class App extends Component {
           */
         this.state = {
             displayArray : [],
-            artists: [], 
-            genre: "", 
-            track: "", 
             deejay_code : "",
             join_deejay : "",
+            track_search : "",
+            type: 'none',
             session : 'none',
             username : '',
             password : '',
@@ -69,18 +68,25 @@ class App extends Component {
         fetch('http://localhost:3001/spotifyapi/start_deejay/'+this.state.session, {
             method: 'GET',
         })
-        .then(res => res.json())
-        .then(result => {
-            alert("Successfully started!");
-            alert(result.code);
-            this.setState({deejay_code: result.code});
+        .then(res => {
+            if (res.status === 200) {
+                res.json();
+            } else {
+                alert("Failed to start");
+                return;
             }
-        );
+        })
+        .then(result => {
+            if (result != null) {
+                alert("Successfully started!");
+                alert(result.code);
+                this.setState({deejay_code: result.code});
+            }
+        });
     }
 
     join_deejay_session() {
         let data = {sessionId : this.state.session, deejay_code: this.state.join_deejay}
-        alert(this.state.join_deejay);
         fetch('/spotifyapi/join_deejay', {
             method: 'POST',
             headers: {
@@ -88,16 +94,49 @@ class App extends Component {
             },
             body: JSON.stringify(data)
         })
-        .then(res => res.json())
-        .then(result => {
-            alert("Successfully joined deejay session");
-            this.setState({deejay_code: result.code});
+        .then(res => {
+            if (res.status === 200) {
+                alert("Successfully joined deejay session");
+                this.setState({
+                    deejay_code: this.state.join_deejay,
+                    join_deejay: ""
+                });
+            } else {
+                alert("Failed to join deejay session");
+                this.setState({join_deejay: ""});
             }
-        );
+        });
     }
 
     search() {
         this.searchTrack();
+    }
+
+    searchTrack() {
+        let data = {type: 'track', q: this.state.track_search}
+        fetch('http://localhost:3001/spotifyapi/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+                      },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(result => {
+            let result_json = JSON.parse(result);
+            let songs = [];
+            let length = result_json.tracks.limit;
+            for(var i = 0; i < length; i++){
+                songs.push([result_json.tracks.items[i].name, result_json.tracks.items[i].id,
+                    result_json.tracks.items[i].artists[0].name]);
+            }
+            
+            this.setState({ 
+                displayArray : songs,
+                type : "Tracks"
+            });
+            }
+        );
     }
   
     getSpotifyNewReleases(){
@@ -378,12 +417,12 @@ class App extends Component {
         // because you already have it! 
         // Here you have it in state but it could also be
         //  in props, coming from another parent.
-        alert("The Child button text is: ");
         // You can also access the target of the click here 
         // if you want to do some magic stuff
         alert("The Child HTML is: " + event.target.outerHTML);
-    }
+        let str_split = event.target.outerHTML.split(": ")[1].split("<")[0];
 
+    }
 
     /**
       * @brief Nav bar for the application
@@ -478,7 +517,7 @@ class App extends Component {
 }
 
 render() {
-    const {displayArray, session, makeAcc, link, loggedIn, loginSpotify, confirmDeleteAcc, username} = this.state;
+    const {displayArray, type, session, makeAcc, link, loggedIn, loginSpotify, confirmDeleteAcc, username} = this.state;
     const login = this.loginPanel(loggedIn, makeAcc, loginSpotify, link, confirmDeleteAcc, username);
 
     // if no session id, then display login screen
@@ -496,31 +535,30 @@ render() {
             <div className="nav">
                 <div id="navLeft">
 
-                <p>DeeJay Session: {this.state.deejay_code || 'none'}</p>
-                <form onSubmit={this.join_deejay_session}>
-                <label>
-                    DeeJay Session Code
-                    <input type="text" name="join_deejay" value={this.state.join_deejay} onChange={this.handleChange} />
-                </label>
-                <input type="submit" value="Submit" />
-                </form>
+                    <p>DeeJay Session: {this.state.deejay_code || 'none'}</p>
 
-                <div id="spotifyBrowse">
+                    <h1>DeeJay Session Code</h1>
+                    <input type="text" name="join_deejay" value={this.state.join_deejay} onChange={this.handleChange} />
+                    <button onClick={this.join_deejay_session}>Join DeeJay session</button>
                     <button onClick={this.start_deejay_session}>Start DeeJay session</button>
-                    <button onClick={this.getSpotifyGenre}>Genres</button>
-                    <button onClick={this.getSpotifyNewReleases}>NewReleases</button>  
-                    <button onClick={this.getSpotifyFeaturedPlaylist}>FeaturedPlaylist</button>  
+
+                    <div id="spotifyBrowse">
+                        <input type="text" name="track_search" value={this.state.track_search} onChange={this.handleChange} />
+                        <button onClick={this.search}>Search</button>
+                        <button onClick={this.getSpotifyGenre}>Genres</button>
+                        <button onClick={this.getSpotifyNewReleases}>NewReleases</button>  
+                        <button onClick={this.getSpotifyFeaturedPlaylist}>FeaturedPlaylist</button>  
+                    </div>
+                </div>
+
+                <div id="login">
+                    {login}
                 </div>
             </div>
-
-            <div id="login">
-                {login}
+            <div id="display">
+                <View arr={displayArray} type={type} onClick={this.handleChildClick}></View>
             </div>
         </div>
-        <div id="display">
-            <View arr={displayArray} onClick={this.handleChildClick}></View>
-        </div>
-    </div>
     );
   }
 }

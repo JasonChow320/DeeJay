@@ -9,51 +9,21 @@ class View extends React.Component {
     }
     render() {
         switch (this.props.type){
-            case 'Albums':
+            case 'Tracks':
                 return (
-                    <p>
-                        <h1>Albums</h1>
-                      {this.props.arr.map(item => (
-                        <div>
-                            <h1>{item[0]}</h1>
-                            <h1>{item[1]}</h1>
-                            <img src={item[2]} alt=""></img>
-                            <button onClick={this.props.onClick}>{this.i++}Hi</button>
-                        </div>
-                      ))}
-                    </p>
-                  );
-            case 'Categories':
-                return(
-                    <div>
-                    <p>
-                        <h1>Categories</h1>
-                      {this.props.arr.map(item => (
-                          <div>
-                          <h1>{item[0]}</h1>
-                          <h1>{item[1]}</h1>
-                          <img src={item[2]} alt=""></img>
-                      </div>
-                      ))}
-                    </p>
-                    </div>
-                );
-            case 'Genre':
-                return(
                     <p>
                         {this.props.arr.map(item => (
                         <div>
-                            <h1>{item}</h1>
-                            </div>
-                        
-                    ))}
+                            <h1>Track {++this.i}</h1>
+                            <h2>{item[0]}</h2>
+                            <h2>{item[1]}</h2>
+                            <h2>{item[2]}</h2>
+                            <button onClick={this.props.onClick}>Add To Queue: {this.i}</button>
+                            <hr></hr>
+                        </div>
+                        ))}
                     </p>
-                    
-                );
-            case 'Playlists':
-                return(
-                    <p>{this.props.arr}</p>
-                );
+                  );
             default:
                 return(<p>Nade</p>);
         }
