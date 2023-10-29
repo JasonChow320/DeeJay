@@ -574,7 +574,7 @@ router.get('/start_deejay/:sessionId', checkUserAccessTokenCache, function(req, 
         const deejay_code = generateRandomString(5);
         redis.setex('deejay:'+deejay_code, 3600, data);
         //res.status(200).json({code : deejay_code}); 
-        res.status(200).json({message: "hi"}); 
+        res.status(200).json({code: deejay_code});
         console.log("Starting DeeJay session for [ " + sessionId + "] with DeeJay Code [" + deejay_code + "]");
     });
 });
