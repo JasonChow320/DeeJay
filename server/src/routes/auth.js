@@ -93,7 +93,6 @@ router.post('/userlogin', (req, res, next)=>{
                 redis.get('UserSession:' + user.sessionId, (err, data)=> {
                     if (data != null) {
                         console.log("user [" + myusername + "] still have valid session key");
-                        redis.setex('UserSession:'+user.sessionId, 43200, user.session);
                         const response = {
                             sessionId : user.sessionId,
                             havespotify : user.havespotify,

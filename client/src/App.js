@@ -1,7 +1,6 @@
 import './App.css';
 import React, {Component} from 'react';
 import View from './View';
-import Cookies from 'universal-cookie';
 
 class App extends Component {
     constructor(props) {
@@ -240,8 +239,6 @@ class App extends Component {
 
         console.log(pid);
 
-        const cookies = new Cookies();
-        cookies.set('sessionId', this.state.session);
         fetch('/spotifyapi/additems', {
           method: 'POST',
           headers: {

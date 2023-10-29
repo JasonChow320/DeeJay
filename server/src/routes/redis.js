@@ -9,4 +9,6 @@ client.on('connect', function (err, res) {
     console.log(err || "Connected to database redis! @ 6379");
 });
 
+
+
 module.exports = client;
