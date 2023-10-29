@@ -65,26 +65,28 @@ class App extends Component {
     }
 
     start_deejay_session() {
-        fetch('http://localhost:3001/spotifyapi/start_deejay/'+this.state.session, {
+        fetch('http://localhost:3001/spotifyapi/start_deejay/' + this.state.session + '?cachebuster=' + Math.random(), {
             method: 'GET',
         })
         .then(res => {
             if (res.status === 200) {
-                res.json();
+                return res.json(); // Return the parsed JSON
             } else {
-                alert("Failed to start");
-                return;
+                throw new Error("Failed to start");
             }
         })
         .then(result => {
-            if (result != null) {
+            if (result.code) {
                 alert("Successfully started!");
                 alert(result.code);
-                this.setState({deejay_code: result.code});
+                this.setState({ deejay_code: result.code });
             } else {
-                alert("Failed to start session");
-                alert(result);
+                throw new Error("Failed to start session");
             }
+        })
+        .catch(error => {
+            // Handle errors, e.g., display in UI or log to the console
+            console.error("Error:", error.message);
         });
     }
 
