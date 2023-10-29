@@ -1,30 +1,26 @@
-import './App.css';
 import React from 'react';
 
-/* everything that is rendered onto the screen is below */
 class View extends React.Component {
-    constructor(props) {
-        super(props);
-        this.i = 0;
-    }
     render() {
-        switch (this.props.type){
+        let i = 0; // Initialize track number here
+
+        switch (this.props.type) {
             case 'Tracks':
                 return (
                     <p>
                         {this.props.arr.map(item => (
-                        <div>
-                            <h1>Track {++this.i}</h1>
-                            <h2>{item[0]}</h2>
-                            <h2>{item[1]}</h2>
-                            <button id={item[2]} onClick={this.props.onClick}>Add To Queue</button>
-                            <hr></hr>
-                        </div>
+                            <div key={item[2]}> {/* Add a unique key to each track */}
+                                <h1>Track {++i}</h1>
+                                <h2>{item[0]}</h2>
+                                <h2>{item[1]}</h2>
+                                <button id={item[2]} onClick={this.props.onClick}>Add To Queue</button>
+                                <hr></hr>
+                            </div>
                         ))}
                     </p>
-                  );
+                );
             default:
-                return(<p>Nade</p>);
+                return (<p>No data available</p>);
         }
     }
 }
