@@ -168,9 +168,6 @@ router.get('/callback', function(req, res) {
     if (state === null || state !== storedState) {
         res.redirect('http://localhost:3000?' + querystring.stringify({error : 'Invalid state on callback'}));
      } else {
-        res.clearCookie(stateKey);
-        res.clearCookie(sessionId);
-
         var authOptions = {
             url: 'https://accounts.spotify.com/api/token',
             form: {
@@ -493,8 +490,7 @@ router.get('/recommendation', checkAndAcquireServerToken, function(req, res){
 
 /* Check if user has access token in redis cache */
 /* deny ALL that don't have a mapping on redis */
-function checkUserAccessTokenCache(req, res, next){
-    let sessionId = req.params.sessionId;
+function checkUserAccessTokenCache(sessionId){
     if (sessionId == null) {
         return;
     }
@@ -502,14 +498,12 @@ function checkUserAccessTokenCache(req, res, next){
     redis.get(sessionId+':spotifyUserAccessToken', (err, data)=>{
         if(data != null){
             console.log("Already have spotify user access token");
-            next();
             return;
         }else{
             redis.get('UserSession:'+sessionId, (err, data)=>{
                 if(err) throw err;
 
                 if(data == null) {
-                    next();
                     return;
                 }
 
@@ -523,7 +517,6 @@ function checkUserAccessTokenCache(req, res, next){
 
                     //check if user has refresh token (only does if login to spotify before)
                     if(user == null) {
-                        next();
                         return;
                     }
 
@@ -543,11 +536,11 @@ function checkUserAccessTokenCache(req, res, next){
                                 var access_token = body.access_token;
                                 //save to cache & output
                                 redis.setex(sessionId+':spotifyUserAccessToken', 3600, access_token);
-                                next();
+                                return;
                             } 
                         });
                     }else{
-                        next();
+                        return;
                     }
                 });
             });
@@ -556,9 +549,9 @@ function checkUserAccessTokenCache(req, res, next){
 }
 
 // Start a DeeJay session
-router.get('/start_deejay/:sessionId', checkUserAccessTokenCache, function(req, res) {
+router.get('/start_deejay/:sessionId', function(req, res) {
     let sessionId = req.params.sessionId;
-    var userID = '';
+    checkUserAccessTokenCache(sessionId);
     redis.get(sessionId+':spotifyUserAccessToken', (err, data)=>{
         if(err) {
             throw err;
@@ -573,8 +566,7 @@ router.get('/start_deejay/:sessionId', checkUserAccessTokenCache, function(req, 
         // create deejay code and save spotify access token to code
         const deejay_code = generateRandomString(5);
         redis.setex('deejay:'+deejay_code, 3600, data);
-        //res.status(200).json({code : deejay_code}); 
-        res.status(200).json({message: "hi"}); 
+        res.status(200).json({code : deejay_code}); 
         console.log("Starting DeeJay session for [ " + sessionId + "] with DeeJay Code [" + deejay_code + "]");
     });
 });
@@ -678,7 +670,7 @@ router.post('/req_track_deejay', checkUserRefreshToken, function(req, res) {
     });
 });
 
-router.post('/additems', checkUserAccessTokenCache, function(req, res) {
+router.post('/additems', function(req, res) {
     var pid = req.body.playlistID || null;
     var uris = req.body.uris || null;
     var sessionId = req.cookies ? req.cookies['sessionId'] : null;
