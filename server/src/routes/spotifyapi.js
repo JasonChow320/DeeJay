@@ -17,6 +17,7 @@ const config = require('../config/config');
 var client_id = config.spotify.SPOTIFY_CLIENTID; // Your client id
 var client_secret = config.spotify.SPOTIFY_SECRETID; // Your secret
 var redirect_uri = config.spotify.callback; // Your redirect uri
+var scope = 'user-read-private user-read-email playlist-modify-public user-modify-playback-state user-read-currently-playing user-read-playback-state';
 
 /* Use redis for cache */
 const redis= require('./redis');
@@ -50,7 +51,6 @@ router.get('/login/', function(req, res) {
     res.cookie(sessionId, id);
 
     /* requests authorization from user */
-    var scope = 'user-read-private user-read-email playlist-modify-public';
     res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
         response_type: 'code',
@@ -138,7 +138,6 @@ router.get('/loginWithAcc/:id', function(req, res) {
     res.cookie('haveAccount', true);
 
     /* requests authorization from user */
-    var scope = 'user-read-private user-read-email playlist-modify-public';
     res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
         response_type: 'code',
@@ -156,6 +155,8 @@ router.get('/callback', function(req, res) {
     var storedState = req.cookies ? req.cookies[stateKey] : null;
     var storedId = req.cookies ? req.cookies[sessionId] : null;
     var haveAcc = req.cookies ? req.cookies['haveAccount'] : null;
+
+    console.log("storedId: " + storedId);
 
     /* callback from /loginWithAcc */
     var haveLogin;
@@ -612,10 +613,12 @@ router.post('/join_deejay', function(req, res) {
 });
 
 // Request a song from DeeJay session
-router.post('/req_track_deejay', checkUserRefreshToken, function(req, res) {
+router.post('/req_track_deejay', function(req, res) {
     var sessionId = req.body.sessionId || null;
     var deejay_code = req.body.deejay_code || null;
     var track_id = req.body.track_id || null; 
+
+    checkUserAccessTokenCache(sessionId);
 
     if (sessionId == null) {
         console.log("Invalid sessionId [" + sessionId + "] received in checkUserSessionid");
@@ -655,7 +658,6 @@ router.post('/req_track_deejay', checkUserRefreshToken, function(req, res) {
             return;
         }
 
-        console.log("LOL:" + data);
         var options = {
             'url': 'https://api.spotify.com/v1/me/player/queue?uri=spotify:track:' + track_id,
             'headers': {
@@ -665,7 +667,13 @@ router.post('/req_track_deejay', checkUserRefreshToken, function(req, res) {
         request.post(options, function(error, response, body) {
             if (!error && response.statusCode === 200) {
                 console.log("Successfully added song track id: [" + track_id + "] to queu");
-            } 
+                res.status(200);
+            } else {
+                console.log("[+] Error. Unable to request a song for deejay code [" + deejay_code + "]");
+                console.log(error);
+                console.log(response);
+                res.status(401);
+            }
         });
     });
 });
