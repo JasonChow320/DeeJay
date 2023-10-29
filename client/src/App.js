@@ -44,6 +44,7 @@ class App extends Component {
         this.search = this.search.bind(this);
         this.start_deejay_session = this.start_deejay_session.bind(this);
         this.join_deejay_session = this.join_deejay_session.bind(this);
+        this.handleChildClick = this.handleChildClick.bind(this);
         this.addItems = this.addItems.bind(this);
         this.getSpotifyNewReleases = this.getSpotifyNewReleases.bind(this);
         this.getSpotifyCategories = this.getSpotifyCategories.bind(this);
@@ -81,6 +82,9 @@ class App extends Component {
                 alert("Successfully started!");
                 alert(result.code);
                 this.setState({deejay_code: result.code});
+            } else {
+                alert("Failed to start session");
+                alert(result);
             }
         });
     }
@@ -127,8 +131,8 @@ class App extends Component {
             let songs = [];
             let length = result_json.tracks.limit;
             for(var i = 0; i < length; i++){
-                songs.push([result_json.tracks.items[i].name, result_json.tracks.items[i].id,
-                    result_json.tracks.items[i].artists[0].name]);
+                songs.push([result_json.tracks.items[i].name, result_json.tracks.items[i].artists[0].name,
+                    result_json.tracks.items[i].id]);
             }
             
             this.setState({ 
@@ -419,9 +423,32 @@ class App extends Component {
         //  in props, coming from another parent.
         // You can also access the target of the click here 
         // if you want to do some magic stuff
-        alert("The Child HTML is: " + event.target.outerHTML);
-        let str_split = event.target.outerHTML.split(": ")[1].split("<")[0];
+        let track_id = event.target.outerHTML.split("\"")[1];
 
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        var data = JSON.stringify({
+            "sessionId": this.state.session,
+            "deejay_code": this.state.deejay_code,
+            "track_id" : track_id,
+        });
+      
+        var requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: data,
+            redirect: 'follow'
+        };
+      
+        fetch("/spotifyapi/req_track_deejay", requestOptions)
+        .then(response => response.json())
+        .then(result =>{
+            if(result.error !== null){
+                alert(result.error);
+            }else{
+                alert("successfully added song track to queue!");
+            }
+        });
     }
 
     /**

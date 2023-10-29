@@ -17,8 +17,7 @@ class View extends React.Component {
                             <h1>Track {++this.i}</h1>
                             <h2>{item[0]}</h2>
                             <h2>{item[1]}</h2>
-                            <h2>{item[2]}</h2>
-                            <button onClick={this.props.onClick}>Add To Queue: {this.i}</button>
+                            <button id={item[2]} onClick={this.props.onClick}>Add To Queue</button>
                             <hr></hr>
                         </div>
                         ))}

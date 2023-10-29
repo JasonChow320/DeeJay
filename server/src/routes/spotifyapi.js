@@ -63,7 +63,7 @@ router.get('/login/', function(req, res) {
 
 /* check for Access or Refresh token for an account login user */
 function checkUserRefreshToken(req, res, next){
-    var sessionId = req.params.id;
+    var sessionId = req.body.sessionId || null;
     if(sessionId == null){
         res.status(204).send({message : 'invalid sessionId'});
     }
@@ -76,7 +76,7 @@ function checkUserRefreshToken(req, res, next){
         }
 
         //then check if there's a valid user session
-        redis.get('UserSession:'+id, (err, data)=>{
+        redis.get('UserSession:'+sessionId, (err, data)=>{
             if(err) {
                 console.log('Invalid user session id detected!');
                 res.status(204).send({message : 'Error, invalid session'});
@@ -288,7 +288,6 @@ router.get('/nr', checkAndAcquireServerToken, function(req, res) {
                 
                 //output the album and author names,
                 console.log(response.body);
-                //res.send(response.body);
                 res.status(200).send(JSON.stringify(response.body));
               });
         }else{
@@ -502,6 +501,7 @@ function checkUserAccessTokenCache(req, res, next){
 
     redis.get(sessionId+':spotifyUserAccessToken', (err, data)=>{
         if(data != null){
+            console.log("Already have spotify user access token");
             next();
             return;
         }else{
@@ -573,8 +573,9 @@ router.get('/start_deejay/:sessionId', checkUserAccessTokenCache, function(req, 
         // create deejay code and save spotify access token to code
         const deejay_code = generateRandomString(5);
         redis.setex('deejay:'+deejay_code, 3600, data);
+        //res.status(200).json({code : deejay_code}); 
+        res.status(200).json({message: "hi"}); 
         console.log("Starting DeeJay session for [ " + sessionId + "] with DeeJay Code [" + deejay_code + "]");
-        res.status(200).send(JSON.stringify({code : deejay_code}));
     });
 });
 
@@ -615,6 +616,65 @@ router.post('/join_deejay', function(req, res) {
         }
 
         res.status(200).json({message : 'successfully joined session'}); 
+    });
+});
+
+// Request a song from DeeJay session
+router.post('/req_track_deejay', checkUserRefreshToken, function(req, res) {
+    var sessionId = req.body.sessionId || null;
+    var deejay_code = req.body.deejay_code || null;
+    var track_id = req.body.track_id || null; 
+
+    if (sessionId == null) {
+        console.log("Invalid sessionId [" + sessionId + "] received in checkUserSessionid");
+        next();
+        return;
+    }
+
+    if (deejay_code == null) {
+        console.log("Invalid deejay_code [" + deejay_code + "] received in req_track_deejay");
+        next();
+        return;
+    }
+
+    if (track_id == null) {
+        console.log("Invalid track_id [" + track_id + "] received in req_track_deejay");
+        next();
+        return;
+    }
+
+    redis.get('UserSession:'+sessionId, (err, data)=>{
+        if(err) throw err;
+
+        if(data == null) {
+            console.log("sessionId [" + sessionId + "] not found in checkUserSessionid");
+            return;
+        }
+    });
+
+    redis.get("deejay:" + deejay_code, (err, data)=>{
+        if(err) {
+            throw err;
+        }
+
+        if(data == null) {
+            console.log('[+] Error, no deejay_code found: ' + deejay_code);
+            res.status(204).json({error : 'Server Error!'});
+            return;
+        }
+
+        console.log("LOL:" + data);
+        var options = {
+            'url': 'https://api.spotify.com/v1/me/player/queue?uri=spotify:track:' + track_id,
+            'headers': {
+                'Authorization': 'Bearer ' + data,
+            },
+        };
+        request.post(options, function(error, response, body) {
+            if (!error && response.statusCode === 200) {
+                console.log("Successfully added song track id: [" + track_id + "] to queu");
+            } 
+        });
     });
 });
 
