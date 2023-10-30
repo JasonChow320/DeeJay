@@ -43,6 +43,7 @@ class App extends Component {
         this.search = this.search.bind(this);
         this.start_deejay_session = this.start_deejay_session.bind(this);
         this.join_deejay_session = this.join_deejay_session.bind(this);
+        this.req_deejay_queue = this.req_deejay_queue.bind(this);
         this.handleChildClick = this.handleChildClick.bind(this);
         this.addItems = this.addItems.bind(this);
         this.getSpotifyNewReleases = this.getSpotifyNewReleases.bind(this);
@@ -113,13 +114,51 @@ class App extends Component {
         });
     }
 
+    req_deejay_queue() {
+        let data = {sessionId : this.state.session, deejay_code: this.state.deejay_code}
+        fetch('/spotifyapi/req_queue_deejay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(res => {
+            if (res.status === 200) {
+                return res.json(); // Return the parsed JSON
+            } else {
+                throw new Error("Failed to request deejay session queue");
+            }
+        })
+        .then(result => {
+            let result_json = JSON.parse(result);
+            let songs = [];
+            let curr_playing = result_json.currently_playing;
+            let curr_queue = result_json.queue;
+
+            if (curr_playing == null) {
+                alert("No songs playing right now");
+                return;
+            }
+
+            songs.push([curr_playing.name, curr_playing.artists[0].name]);
+            for(var i = 0; i < curr_queue.length; i++){
+                songs.push([curr_queue[i].name, curr_queue[i].artists[0].name]);
+            }
+
+            this.setState({ 
+                displayArray : songs,
+                type : "Queue"
+            });
+        });
+    }
+
     search() {
         this.searchTrack();
     }
 
     searchTrack() {
         let data = {type: 'track', q: this.state.track_search}
-        fetch('http://localhost:3001/spotifyapi/search', {
+        fetch('/spotifyapi/search', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -140,8 +179,7 @@ class App extends Component {
                 displayArray : songs,
                 type : "Tracks"
             });
-            }
-        );
+        });
     }
   
     getSpotifyNewReleases(){
@@ -571,9 +609,7 @@ render() {
                     <div id="spotifyBrowse">
                         <input type="text" name="track_search" value={this.state.track_search} onChange={this.handleChange} />
                         <button onClick={this.search}>Search</button>
-                        <button onClick={this.getSpotifyGenre}>Genres</button>
-                        <button onClick={this.getSpotifyNewReleases}>NewReleases</button>  
-                        <button onClick={this.getSpotifyFeaturedPlaylist}>FeaturedPlaylist</button>  
+                        <button onClick={this.req_deejay_queue}>Request DeeJay queue</button>
                     </div>
                 </div>
 

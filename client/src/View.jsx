@@ -19,6 +19,18 @@ class View extends React.Component {
                         ))}
                     </p>
                 );
+            case 'Queue':
+                return (
+                    <p>
+                        {this.props.arr.map(item => (
+                            <div>
+                                <h1>{item[0]}</h1>
+                                <h2>{item[1]}</h2>
+                                <hr></hr>
+                            </div>
+                        ))}
+                    </p>
+                );
             default:
                 return (<p>No data available</p>);
         }

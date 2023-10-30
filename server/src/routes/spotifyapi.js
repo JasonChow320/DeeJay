@@ -521,7 +521,9 @@ function checkUserAccessTokenCache(sessionId){
                         return;
                     }
 
+                    alert("checking if user has spotify");
                     if(user.havespotify){
+                        alert("user has spotify");
                         //we checked cache already, so if we're here, it means we have refresh token but no access token
                         var authOptions = {
                             url: 'https://accounts.spotify.com/api/token',
@@ -668,6 +670,65 @@ router.post('/req_track_deejay', function(req, res) {
             if (!error && response.statusCode === 200) {
                 console.log("Successfully added song track id: [" + track_id + "] to queu");
                 res.status(200);
+            } else {
+                console.log("[+] Error. Unable to request a song for deejay code [" + deejay_code + "]");
+                console.log(error);
+                console.log(response);
+                res.status(401);
+            }
+        });
+    });
+});
+
+// req queue from DeeJay session
+router.post('/req_queue_deejay', function(req, res) {
+    var sessionId = req.body.sessionId || null;
+    var deejay_code = req.body.deejay_code || null;
+
+    checkUserAccessTokenCache(sessionId);
+
+    if (sessionId == null) {
+        console.log("Invalid sessionId [" + sessionId + "] received in checkUserSessionid");
+        next();
+        return;
+    }
+
+    if (deejay_code == null) {
+        console.log("Invalid deejay_code [" + deejay_code + "] received in req_track_deejay");
+        next();
+        return;
+    }
+
+    redis.get('UserSession:'+sessionId, (err, data)=>{
+        if(err) throw err;
+
+        if(data == null) {
+            console.log("sessionId [" + sessionId + "] not found in checkUserSessionid");
+            return;
+        }
+    });
+
+    redis.get("deejay:" + deejay_code, (err, data)=>{
+        if(err) {
+            throw err;
+        }
+
+        if(data == null) {
+            console.log('[+] Error, no deejay_code found: ' + deejay_code);
+            res.status(204).json({error : 'Server Error!'});
+            return;
+        }
+
+        var options = {
+            'url': 'https://api.spotify.com/v1/me/player/queue',
+            'headers': {
+                'Authorization': 'Bearer ' + data,
+            },
+        };
+        request.get(options, function(error, response, body) {
+            if (!error && response.statusCode === 200) {
+                console.log("Successfully fetched song queue for deejay code [" + deejay_code + "]");
+                res.status(200).send(JSON.stringify(response.body));
             } else {
                 console.log("[+] Error. Unable to request a song for deejay code [" + deejay_code + "]");
                 console.log(error);
