@@ -8,8 +8,8 @@ const config = {
       name: 'DEV'
     },
     spotify : {
-        SPOTIFY_CLIENTID : 'b3098bd2d517442995f3dbdaea624113',
-        SPOTIFY_SECRETID : '765cfcc072624a928dae2992492f18cd',
+        SPOTIFY_CLIENTID : 'YOUR_CLIENTID_HERE',
+        SPOTIFY_SECRETID : 'YOUR_SECRETID_HERE',
         callback : 'http://localhost:3001/spotifyapi/callback/'
     },
     crypto : {

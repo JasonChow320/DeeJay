@@ -1,12 +1,12 @@
 {
-  "name": "411_project",
+  "name": "DeeJay Chow",
   "version": "1.0.0",
-  "description": "A group project for CS411",
+  "description": "A web server for managing a spotify queue with friends",
   "private": true,
   "scripts": {
     "start": "node ./src/bin/www"
   },
-  "author": "Jason Chow, Nikoloz Rapava, Rifat Maxyutov, Sarah Shahinpour, Tanner Jiwon Park",
+  "author": "Jason Chow",
   "license": "ISC",
   "dependencies": {
     "cookie-parser": "~1.4.5",
