@@ -15,12 +15,12 @@ class App extends Component {
           * @state deejay_code     forum for user to join a deejay session
           *
           * For login
-          * @state makeAcc         boolean to see if user is trying to make account
-          * @state username        text field for username
-          * @state password        text field for password
-          * @state email           text field for email
-          * @state link            api to backend to login to spotify
-          * @state loginSpotify    boolean if user is signed in to spotify
+          * @state makeAcc              boolean to see if user is trying to make account
+          * @state username             text field for username
+          * @state password             text field for password
+          * @state email                text field for email
+          * @state link                 api to backend to login to spotify
+          * @state loginSpotify         boolean if user is signed in to spotify
           * @state confirmDeleteAcc     boolean to confirm if user wants to delete account
           */
         this.state = {
@@ -51,6 +51,7 @@ class App extends Component {
         this.getSpotifyGenre = this.getSpotifyGenre.bind(this);
         this.getSpotifyFeaturedPlaylist = this.getSpotifyFeaturedPlaylist.bind(this);
         this.loginSubmit = this.loginSubmit.bind(this);
+        this.loginWithoutAcc = this.loginWithoutAcc.bind(this);
         this.loginPanel = this.loginPanel.bind(this);
         this.AccSubmit = this.AccSubmit.bind(this);
         this.toggleAccount = this.toggleAccount.bind(this);
@@ -361,6 +362,33 @@ class App extends Component {
         });
     }
 
+    loginWithoutAcc(event){
+        event.preventDefault();
+        var myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+        var requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+        };
+      
+        fetch("/login/nonuserlogin", requestOptions)
+        .then(response => response.json())
+        .then(result =>{
+            if(result.error !== null){
+              alert(result.error);
+            }else{
+                if(result.sessionId != null){
+                    this.setState({
+                        session : result.sessionId,
+                        loggedIn : false,
+                        loginSpotify : false,
+                        link : 'http://localhost:3001/spotifyapi/loginWithAcc/'+result.sessionId
+                    });
+                }
+            }
+        });
+    }
+
     AccSubmit(event){
         event.preventDefault();
         const {username, password, email} = this.state;
@@ -534,7 +562,7 @@ class App extends Component {
                         </form>
                         <button onClick={this.toggleAccount}>Sign Up</button>
                         <br></br>
-                        <a className="App-link" href={link}>Log In To Spotify without an Account</a>
+                        <button onClick={this.loginWithoutAcc}>Log In Without Account</button>
                     </div>
                 );
             }

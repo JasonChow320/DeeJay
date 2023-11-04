@@ -138,6 +138,20 @@ var stringContainsSpecialCharacters = function(username)
 
     return checkUsername;
 }
+
+/**
+ * @brief Login to DeeJay application without an account.
+ */
+router.post('/nonuserlogin', (req, res, next)=>{
+    let sessionId = generateRandomString(16);
+    /* saves session for a day */
+    redis.setex('UserSession:'+sessionId, 43200, "non-user");
+    const response = {
+        sessionId : sessionId,
+        error : null
+    };
+    res.json(response);
+});
     
 /**
  * @brief Create new user for DeeJay application. This requires a unique username.
