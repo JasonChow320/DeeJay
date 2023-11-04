@@ -521,9 +521,7 @@ function checkUserAccessTokenCache(sessionId){
                         return;
                     }
 
-                    alert("checking if user has spotify");
                     if(user.havespotify){
-                        alert("user has spotify");
                         //we checked cache already, so if we're here, it means we have refresh token but no access token
                         var authOptions = {
                             url: 'https://accounts.spotify.com/api/token',
